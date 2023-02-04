@@ -4,12 +4,12 @@
     Copyright (c) 2015 by Wenzel Jakob
 */
 
+#include <fstream>
+#include <hypothesis.h>
+#include <memory>
 #include <nori/bsdf.h>
 #include <nori/warp.h>
 #include <pcg32.h>
-#include <hypothesis.h>
-#include <fstream>
-#include <memory>
 
 /*
  * =======================================================================
@@ -28,7 +28,7 @@ NORI_NAMESPACE_BEGIN
  * implementation claims via its associated density function.
  */
 class ChiSquareTest : public NoriObject {
-public:
+  public:
     ChiSquareTest(const PropertyList &propList) {
         /* The null hypothesis will be rejected when the associated
            p-value is below the significance level specified here. */
@@ -67,65 +67,74 @@ public:
 
     void addChild(NoriObject *obj) {
         switch (obj->getClassType()) {
-            case EBSDF:
-                m_bsdfs.push_back(static_cast<BSDF *>(obj));
-                break;
+        case EBSDF:
+            m_bsdfs.push_back(static_cast<BSDF *>(obj));
+            break;
 
-            default:
-                throw NoriException("ChiSquareTest::addChild(<%s>) is not supported!",
-                    classTypeName(obj->getClassType()));
+        default:
+            throw NoriException(
+                "ChiSquareTest::addChild(<%s>) is not supported!",
+                classTypeName(obj->getClassType()));
         }
     }
 
     /// Execute the chi-square test
     void activate() {
-        int passed = 0, total = 0, res = m_cosThetaResolution*m_phiResolution;
+        int passed = 0, total = 0, res = m_cosThetaResolution * m_phiResolution;
         pcg32 random; /* Pseudorandom number generator */
 
         std::unique_ptr<double[]> obsFrequencies(new double[res]);
         std::unique_ptr<double[]> expFrequencies(new double[res]);
 
-
         /* Test each registered BSDF */
         for (auto bsdf : m_bsdfs) {
             /* Run several tests per BSDF to be on the safe side */
-            for (int l = 0; l<m_testCount; ++l) {
-                memset(obsFrequencies.get(), 0, res*sizeof(double));
-                memset(expFrequencies.get(), 0, res*sizeof(double));
+            for (int l = 0; l < m_testCount; ++l) {
+                memset(obsFrequencies.get(), 0, res * sizeof(double));
+                memset(expFrequencies.get(), 0, res * sizeof(double));
 
-                cout << "------------------------------------------------------" << endl;
+                cout << "------------------------------------------------------"
+                     << endl;
                 cout << "Testing: " << bsdf->toString() << endl;
                 ++total;
 
                 float cosTheta = random.nextFloat();
-                float sinTheta = std::sqrt(std::max((float) 0, 1-cosTheta*cosTheta));
+                float sinTheta =
+                    std::sqrt(std::max((float)0, 1 - cosTheta * cosTheta));
                 float sinPhi, cosPhi;
                 sincosf(2.0f * M_PI * random.nextFloat(), &sinPhi, &cosPhi);
                 Vector3f wi(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
 
-                cout << "Accumulating " << m_sampleCount << " samples into a " << m_cosThetaResolution
-                     << "x" << m_phiResolution << " contingency table .. ";
+                cout << "Accumulating " << m_sampleCount << " samples into a "
+                     << m_cosThetaResolution << "x" << m_phiResolution
+                     << " contingency table .. ";
                 cout.flush();
 
                 /* Generate many samples from the BSDF and create
                    a histogram / contingency table */
                 BSDFQueryRecord bRec(wi);
-                for (int i=0; i<m_sampleCount; ++i) {
+                for (int i = 0; i < m_sampleCount; ++i) {
                     Point2f sample(random.nextFloat(), random.nextFloat());
                     Color3f result = bsdf->sample(bRec, sample);
 
                     if ((result.array() == 0).all())
                         continue;
 
-                    int cosThetaBin = std::min(std::max(0, (int) std::floor((bRec.wo.z()*0.5f+0.5f)
-                            * m_cosThetaResolution)), m_cosThetaResolution-1);
+                    int cosThetaBin = std::min(
+                        std::max(0,
+                                 (int)std::floor((bRec.wo.z() * 0.5f + 0.5f) *
+                                                 m_cosThetaResolution)),
+                        m_cosThetaResolution - 1);
 
-                    float scaledPhi = std::atan2(bRec.wo.y(), bRec.wo.x()) * INV_TWOPI;
+                    float scaledPhi =
+                        std::atan2(bRec.wo.y(), bRec.wo.x()) * INV_TWOPI;
                     if (scaledPhi < 0)
                         scaledPhi += 1;
 
-                    int phiBin = std::min(std::max(0,
-                        (int) std::floor(scaledPhi * m_phiResolution)), m_phiResolution-1);
+                    int phiBin =
+                        std::min(std::max(0, (int)std::floor(scaledPhi *
+                                                             m_phiResolution)),
+                                 m_phiResolution - 1);
                     obsFrequencies[cosThetaBin * m_phiResolution + phiBin] += 1;
                 }
                 cout << "done." << endl;
@@ -135,20 +144,25 @@ public:
                 double *ptr = expFrequencies.get();
                 cout << "Integrating expected frequencies .. ";
                 cout.flush();
-                for (int i=0; i<m_cosThetaResolution; ++i) {
-                    double cosThetaStart = -1.0 + i     * 2.0 / m_cosThetaResolution;
-                    double cosThetaEnd   = -1.0 + (i+1) * 2.0 / m_cosThetaResolution;
-                    for (int j=0; j<m_phiResolution; ++j) {
-                        double phiStart = j     * 2*M_PI / m_phiResolution;
-                        double phiEnd   = (j+1) * 2*M_PI / m_phiResolution;
+                for (int i = 0; i < m_cosThetaResolution; ++i) {
+                    double cosThetaStart =
+                        -1.0 + i * 2.0 / m_cosThetaResolution;
+                    double cosThetaEnd =
+                        -1.0 + (i + 1) * 2.0 / m_cosThetaResolution;
+                    for (int j = 0; j < m_phiResolution; ++j) {
+                        double phiStart = j * 2 * M_PI / m_phiResolution;
+                        double phiEnd = (j + 1) * 2 * M_PI / m_phiResolution;
 
-                        auto integrand = [&](double cosTheta, double phi) -> double {
-                            double sinTheta = std::sqrt(1 - cosTheta * cosTheta);
-                            double sinPhi = std::sin(phi), cosPhi = std::cos(phi);
+                        auto integrand = [&](double cosTheta,
+                                             double phi) -> double {
+                            double sinTheta =
+                                std::sqrt(1 - cosTheta * cosTheta);
+                            double sinPhi = std::sin(phi),
+                                   cosPhi = std::cos(phi);
 
-                            Vector3f wo((float) (sinTheta * cosPhi),
-                                        (float) (sinTheta * sinPhi),
-                                        (float) cosTheta);
+                            Vector3f wo((float)(sinTheta * cosPhi),
+                                        (float)(sinTheta * sinPhi),
+                                        (float)cosTheta);
 
                             BSDFQueryRecord bRec(wi, wo, ESolidAngle);
                             return bsdf->pdf(bRec);
@@ -164,13 +178,16 @@ public:
                 cout << "done." << endl;
 
                 /* Write the test input data to disk for debugging */
-                hypothesis::chi2_dump(m_cosThetaResolution, m_phiResolution, obsFrequencies.get(), expFrequencies.get(),
-                    tfm::format("chi2test_%i.m", total));
+                hypothesis::chi2_dump(
+                    m_cosThetaResolution, m_phiResolution, obsFrequencies.get(),
+                    expFrequencies.get(), tfm::format("chi2test_%i.m", total));
 
                 /* Perform the Chi^2 test */
-                std::pair<bool, std::string> result =
-                    hypothesis::chi2_test(m_cosThetaResolution*m_phiResolution, obsFrequencies.get(), expFrequencies.get(),
-                        m_sampleCount, m_minExpFrequency, m_significanceLevel, m_testCount * (int) m_bsdfs.size());
+                std::pair<bool, std::string> result = hypothesis::chi2_test(
+                    m_cosThetaResolution * m_phiResolution,
+                    obsFrequencies.get(), expFrequencies.get(), m_sampleCount,
+                    m_minExpFrequency, m_significanceLevel,
+                    m_testCount * (int)m_bsdfs.size());
 
                 if (result.first)
                     ++passed;
@@ -186,24 +203,21 @@ public:
 
     std::string toString() const {
         return tfm::format("ChiSquareTest[\n"
-            "  thetaResolution = %i,\n"
-            "  phiResolution = %i,\n"
-            "  minExpFrequency = %i,\n"
-            "  sampleCount = %i,\n"
-            "  testCount = %i,\n"
-            "  significanceLevel = %f\n"
-            "]",
-            m_cosThetaResolution,
-            m_phiResolution,
-            m_minExpFrequency,
-            m_sampleCount,
-            m_testCount,
-            m_significanceLevel
-        );
+                           "  thetaResolution = %i,\n"
+                           "  phiResolution = %i,\n"
+                           "  minExpFrequency = %i,\n"
+                           "  sampleCount = %i,\n"
+                           "  testCount = %i,\n"
+                           "  significanceLevel = %f\n"
+                           "]",
+                           m_cosThetaResolution, m_phiResolution,
+                           m_minExpFrequency, m_sampleCount, m_testCount,
+                           m_significanceLevel);
     }
 
     EClassType getClassType() const { return ETest; }
-private:
+
+  private:
     int m_cosThetaResolution;
     int m_phiResolution;
     int m_minExpFrequency;

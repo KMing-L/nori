@@ -14,14 +14,19 @@ void NoriObject::addChild(NoriObject *) {
         classTypeName(getClassType()));
 }
 
-void NoriObject::activate() { /* Do nothing */ }
-void NoriObject::setParent(NoriObject *) { /* Do nothing */ }
+void NoriObject::activate() { /* Do nothing */
+}
+void NoriObject::setParent(NoriObject *) { /* Do nothing */
+}
 
-std::map<std::string, NoriObjectFactory::Constructor> *NoriObjectFactory::m_constructors = nullptr;
+std::map<std::string, NoriObjectFactory::Constructor>
+    *NoriObjectFactory::m_constructors = nullptr;
 
-void NoriObjectFactory::registerClass(const std::string &name, const Constructor &constr) {
+void NoriObjectFactory::registerClass(const std::string &name,
+                                      const Constructor &constr) {
     if (!m_constructors)
-        m_constructors = new std::map<std::string, NoriObjectFactory::Constructor>();
+        m_constructors =
+            new std::map<std::string, NoriObjectFactory::Constructor>();
     (*m_constructors)[name] = constr;
 }
 

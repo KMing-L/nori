@@ -14,7 +14,7 @@ NORI_NAMESPACE_BEGIN
  * \brief Diffuse / Lambertian BRDF model
  */
 class Diffuse : public BSDF {
-public:
+  public:
     Diffuse(const PropertyList &propList) {
         m_albedo = propList.getColor("albedo", Color3f(0.5f));
     }
@@ -23,9 +23,8 @@ public:
     Color3f eval(const BSDFQueryRecord &bRec) const {
         /* This is a smooth BRDF -- return zero if the measure
            is wrong, or when queried for illumination on the backside */
-        if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) <= 0
-            || Frame::cosTheta(bRec.wo) <= 0)
+        if (bRec.measure != ESolidAngle || Frame::cosTheta(bRec.wi) <= 0 ||
+            Frame::cosTheta(bRec.wo) <= 0)
             return Color3f(0.0f);
 
         /* The BRDF is simply the albedo / pi */
@@ -36,11 +35,9 @@ public:
     float pdf(const BSDFQueryRecord &bRec) const {
         /* This is a smooth BRDF -- return zero if the measure
            is wrong, or when queried for illumination on the backside */
-        if (bRec.measure != ESolidAngle
-            || Frame::cosTheta(bRec.wi) <= 0
-            || Frame::cosTheta(bRec.wo) <= 0)
+        if (bRec.measure != ESolidAngle || Frame::cosTheta(bRec.wi) <= 0 ||
+            Frame::cosTheta(bRec.wo) <= 0)
             return 0.0f;
-
 
         /* Importance sampling density wrt. solid angles:
            cos(theta) / pi.
@@ -70,20 +67,19 @@ public:
         return m_albedo;
     }
 
-    bool isDiffuse() const {
-        return true;
-    }
+    bool isDiffuse() const { return true; }
 
     /// Return a human-readable summary
     std::string toString() const {
-        return tfm::format(
-            "Diffuse[\n"
-            "  albedo = %s\n"
-            "]", m_albedo.toString());
+        return tfm::format("Diffuse[\n"
+                           "  albedo = %s\n"
+                           "]",
+                           m_albedo.toString());
     }
 
     EClassType getClassType() const { return EBSDF; }
-private:
+
+  private:
     Color3f m_albedo;
 };
 

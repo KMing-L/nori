@@ -11,7 +11,7 @@ NORI_NAMESPACE_BEGIN
 
 /// Ideal dielectric BSDF
 class Dielectric : public BSDF {
-public:
+  public:
     Dielectric(const PropertyList &propList) {
         /* Interior IOR (default: BK7 borosilicate optical glass) */
         m_intIOR = propList.getFloat("intIOR", 1.5046f);
@@ -35,14 +35,14 @@ public:
     }
 
     std::string toString() const {
-        return tfm::format(
-            "Dielectric[\n"
-            "  intIOR = %f,\n"
-            "  extIOR = %f\n"
-            "]",
-            m_intIOR, m_extIOR);
+        return tfm::format("Dielectric[\n"
+                           "  intIOR = %f,\n"
+                           "  extIOR = %f\n"
+                           "]",
+                           m_intIOR, m_extIOR);
     }
-private:
+
+  private:
     float m_intIOR, m_extIOR;
 };
 

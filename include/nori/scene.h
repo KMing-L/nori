@@ -18,7 +18,7 @@ NORI_NAMESPACE_BEGIN
  * are mostly used by the \ref Integrator implementations.
  */
 class Scene : public NoriObject {
-public:
+  public:
     /// Construct a new scene object
     Scene(const PropertyList &);
 
@@ -104,7 +104,8 @@ public:
     std::string toString() const;
 
     EClassType getClassType() const { return EScene; }
-private:
+
+  private:
     std::vector<Mesh *> m_meshes;
     Integrator *m_integrator = nullptr;
     Sampler *m_sampler = nullptr;

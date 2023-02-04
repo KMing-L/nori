@@ -26,7 +26,7 @@ NORI_NAMESPACE_BEGIN
  * http://graphics.stanford.edu/~mmp/chapters/pbrt_chapter7.pdf
  */
 class ReconstructionFilter : public NoriObject {
-public:
+  public:
     /// Return the filter radius in fractional pixels
     float getRadius() const { return m_radius; }
 
@@ -34,11 +34,12 @@ public:
     virtual float eval(float x) const = 0;
 
     /**
-     * \brief Return the type of object (i.e. Mesh/Camera/etc.) 
+     * \brief Return the type of object (i.e. Mesh/Camera/etc.)
      * provided by this instance
      * */
     EClassType getClassType() const { return EReconstructionFilter; }
-protected:
+
+  protected:
     float m_radius;
 };
 

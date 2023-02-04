@@ -6,19 +6,20 @@
 
 #pragma once
 
-#include <nori/object.h>
-#include <nori/frame.h>
 #include <nori/bbox.h>
+#include <nori/frame.h>
+#include <nori/object.h>
 
 NORI_NAMESPACE_BEGIN
 
 /**
  * \brief Intersection data structure
  *
- * This data structure records local information about a ray-triangle intersection.
- * This includes the position, traveled ray distance, uv coordinates, as well
- * as well as two local coordinate frames (one that corresponds to the true
- * geometry, and one that is used for shading computations).
+ * This data structure records local information about a ray-triangle
+ * intersection. This includes the position, traveled ray distance, uv
+ * coordinates, as well as well as two local coordinate frames (one that
+ * corresponds to the true geometry, and one that is used for shading
+ * computations).
  */
 struct Intersection {
     /// Position of the surface intersection
@@ -35,17 +36,13 @@ struct Intersection {
     const Mesh *mesh;
 
     /// Create an uninitialized intersection record
-    Intersection() : mesh(nullptr) { }
+    Intersection() : mesh(nullptr) {}
 
     /// Transform a direction vector into the local shading frame
-    Vector3f toLocal(const Vector3f &d) const {
-        return shFrame.toLocal(d);
-    }
+    Vector3f toLocal(const Vector3f &d) const { return shFrame.toLocal(d); }
 
     /// Transform a direction vector from local to world coordinates
-    Vector3f toWorld(const Vector3f &d) const {
-        return shFrame.toWorld(d);
-    }
+    Vector3f toWorld(const Vector3f &d) const { return shFrame.toWorld(d); }
 
     /// Return a human-readable summary of the intersection record
     std::string toString() const;
@@ -60,7 +57,7 @@ struct Intersection {
  * external file)
  */
 class Mesh : public NoriObject {
-public:
+  public:
     /// Release all memory
     virtual ~Mesh();
 
@@ -68,10 +65,10 @@ public:
     virtual void activate();
 
     /// Return the total number of triangles in this shape
-    uint32_t getTriangleCount() const { return (uint32_t) m_F.cols(); }
+    uint32_t getTriangleCount() const { return (uint32_t)m_F.cols(); }
 
     /// Return the total number of vertices in this shape
-    uint32_t getVertexCount() const { return (uint32_t) m_V.cols(); }
+    uint32_t getVertexCount() const { return (uint32_t)m_V.cols(); }
 
     /// Return the surface area of the given triangle
     float surfaceArea(uint32_t index) const;
@@ -110,7 +107,8 @@ public:
      * \return
      *   \c true if an intersection has been detected
      */
-    bool rayIntersect(uint32_t index, const Ray3f &ray, float &u, float &v, float &t) const;
+    bool rayIntersect(uint32_t index, const Ray3f &ray, float &u, float &v,
+                      float &t) const;
 
     /// Return a pointer to the vertex positions
     const MatrixXf &getVertexPositions() const { return m_V; }
@@ -118,7 +116,8 @@ public:
     /// Return a pointer to the vertex normals (or \c nullptr if there are none)
     const MatrixXf &getVertexNormals() const { return m_N; }
 
-    /// Return a pointer to the texture coordinates (or \c nullptr if there are none)
+    /// Return a pointer to the texture coordinates (or \c nullptr if there are
+    /// none)
     const MatrixXf &getVertexTexCoords() const { return m_UV; }
 
     /// Return a pointer to the triangle vertex index list
@@ -151,19 +150,19 @@ public:
      * */
     EClassType getClassType() const { return EMesh; }
 
-protected:
+  protected:
     /// Create an empty mesh
     Mesh();
 
-protected:
-    std::string m_name;                  ///< Identifying name
-    MatrixXf      m_V;                   ///< Vertex positions
-    MatrixXf      m_N;                   ///< Vertex normals
-    MatrixXf      m_UV;                  ///< Vertex texture coordinates
-    MatrixXu      m_F;                   ///< Faces
-    BSDF         *m_bsdf = nullptr;      ///< BSDF of the surface
-    Emitter    *m_emitter = nullptr;     ///< Associated emitter, if any
-    BoundingBox3f m_bbox;                ///< Bounding box of the mesh
+  protected:
+    std::string m_name;           ///< Identifying name
+    MatrixXf m_V;                 ///< Vertex positions
+    MatrixXf m_N;                 ///< Vertex normals
+    MatrixXf m_UV;                ///< Vertex texture coordinates
+    MatrixXu m_F;                 ///< Faces
+    BSDF *m_bsdf = nullptr;       ///< BSDF of the surface
+    Emitter *m_emitter = nullptr; ///< Associated emitter, if any
+    BoundingBox3f m_bbox;         ///< Bounding box of the mesh
 };
 
 NORI_NAMESPACE_END

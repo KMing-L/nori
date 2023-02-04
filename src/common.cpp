@@ -4,11 +4,11 @@
     Copyright (c) 2015 by Wenzel Jakob
 */
 
-#include <nori/object.h>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
 #include <filesystem/resolver.h>
 #include <iomanip>
+#include <nori/object.h>
 
 #if defined(PLATFORM_LINUX)
 #include <malloc.h>
@@ -31,7 +31,7 @@ std::string indent(const std::string &string, int amount) {
     std::ostringstream oss;
     std::string spacer(amount, ' ');
     bool firstLine = true;
-    for (std::string line; std::getline(iss, line); ) {
+    for (std::string line; std::getline(iss, line);) {
         if (!firstLine)
             oss << spacer;
         oss << line;
@@ -67,7 +67,7 @@ bool toBool(const std::string &str) {
 
 int toInt(const std::string &str) {
     char *end_ptr = nullptr;
-    int result = (int) strtol(str.c_str(), &end_ptr, 10);
+    int result = (int)strtol(str.c_str(), &end_ptr, 10);
     if (*end_ptr != '\0')
         throw NoriException("Could not parse integer value \"%s\"", str);
     return result;
@@ -75,7 +75,7 @@ int toInt(const std::string &str) {
 
 unsigned int toUInt(const std::string &str) {
     char *end_ptr = nullptr;
-    unsigned int result = (int) strtoul(str.c_str(), &end_ptr, 10);
+    unsigned int result = (int)strtoul(str.c_str(), &end_ptr, 10);
     if (*end_ptr != '\0')
         throw NoriException("Could not parse integer value \"%s\"", str);
     return result;
@@ -83,7 +83,7 @@ unsigned int toUInt(const std::string &str) {
 
 float toFloat(const std::string &str) {
     char *end_ptr = nullptr;
-    float result = (float) strtof(str.c_str(), &end_ptr);
+    float result = (float)strtof(str.c_str(), &end_ptr);
     if (*end_ptr != '\0')
         throw NoriException("Could not parse floating point value \"%s\"", str);
     return result;
@@ -94,13 +94,15 @@ Eigen::Vector3f toVector3f(const std::string &str) {
     if (tokens.size() != 3)
         throw NoriException("Expected 3 values");
     Eigen::Vector3f result;
-    for (int i=0; i<3; ++i)
+    for (int i = 0; i < 3; ++i)
         result[i] = toFloat(tokens[i]);
     return result;
 }
 
-std::vector<std::string> tokenize(const std::string &string, const std::string &delim, bool includeEmpty) {
-    std::string::size_type lastPos = 0, pos = string.find_first_of(delim, lastPos);
+std::vector<std::string> tokenize(const std::string &string,
+                                  const std::string &delim, bool includeEmpty) {
+    std::string::size_type lastPos = 0,
+                           pos = string.find_first_of(delim, lastPos);
     std::vector<std::string> tokens;
 
     while (lastPos != std::string::npos) {
@@ -122,38 +124,40 @@ std::string timeString(double time, bool precise) {
 
     std::string suffix = "ms";
     if (time > 1000) {
-        time /= 1000; suffix = "s";
+        time /= 1000;
+        suffix = "s";
         if (time > 60) {
-            time /= 60; suffix = "m";
+            time /= 60;
+            suffix = "m";
             if (time > 60) {
-                time /= 60; suffix = "h";
+                time /= 60;
+                suffix = "h";
                 if (time > 12) {
-                    time /= 12; suffix = "d";
+                    time /= 12;
+                    suffix = "d";
                 }
             }
         }
     }
 
     std::ostringstream os;
-    os << std::setprecision(precise ? 4 : 1)
-       << std::fixed << time << suffix;
+    os << std::setprecision(precise ? 4 : 1) << std::fixed << time << suffix;
 
     return os.str();
 }
 
 std::string memString(size_t size, bool precise) {
-    double value = (double) size;
-    const char *suffixes[] = {
-        "B", "KiB", "MiB", "GiB", "TiB", "PiB"
-    };
+    double value = (double)size;
+    const char *suffixes[] = {"B", "KiB", "MiB", "GiB", "TiB", "PiB"};
     int suffix = 0;
     while (suffix < 5 && value > 1024.0f) {
-        value /= 1024.0f; ++suffix;
+        value /= 1024.0f;
+        ++suffix;
     }
 
     std::ostringstream os;
-    os << std::setprecision(suffix == 0 ? 0 : (precise ? 4 : 1))
-       << std::fixed << value << " " << suffixes[suffix];
+    os << std::setprecision(suffix == 0 ? 0 : (precise ? 4 : 1)) << std::fixed
+       << value << " " << suffixes[suffix];
 
     return os.str();
 }
@@ -166,14 +170,13 @@ filesystem::resolver *getFileResolver() {
 Color3f Color3f::toSRGB() const {
     Color3f result;
 
-    for (int i=0; i<3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         float value = coeff(i);
 
         if (value <= 0.0031308f)
             result[i] = 12.92f * value;
         else
-            result[i] = (1.0f + 0.055f)
-                * std::pow(value, 1.0f/2.4f) -  0.055f;
+            result[i] = (1.0f + 0.055f) * std::pow(value, 1.0f / 2.4f) - 0.055f;
     }
 
     return result;
@@ -182,21 +185,20 @@ Color3f Color3f::toSRGB() const {
 Color3f Color3f::toLinearRGB() const {
     Color3f result;
 
-    for (int i=0; i<3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         float value = coeff(i);
 
         if (value <= 0.04045f)
             result[i] = value * (1.0f / 12.92f);
         else
-            result[i] = std::pow((value + 0.055f)
-                * (1.0f / 1.055f), 2.4f);
+            result[i] = std::pow((value + 0.055f) * (1.0f / 1.055f), 2.4f);
     }
 
     return result;
 }
 
 bool Color3f::isValid() const {
-    for (int i=0; i<3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         float value = coeff(i);
         if (value < 0 || !std::isfinite(value))
             return false;
@@ -209,17 +211,17 @@ float Color3f::getLuminance() const {
 }
 
 Transform::Transform(const Eigen::Matrix4f &trafo)
-    : m_transform(trafo), m_inverse(trafo.inverse()) { }
+    : m_transform(trafo), m_inverse(trafo.inverse()) {}
 
 std::string Transform::toString() const {
     std::ostringstream oss;
-    oss << m_transform.format(Eigen::IOFormat(4, 0, ", ", ";\n", "", "", "[", "]"));
+    oss << m_transform.format(
+        Eigen::IOFormat(4, 0, ", ", ";\n", "", "", "[", "]"));
     return oss.str();
 }
 
 Transform Transform::operator*(const Transform &t) const {
-    return Transform(m_transform * t.m_transform,
-        t.m_inverse * m_inverse);
+    return Transform(m_transform * t.m_transform, t.m_inverse * m_inverse);
 }
 
 Vector3f sphericalDirection(float theta, float phi) {
@@ -228,20 +230,13 @@ Vector3f sphericalDirection(float theta, float phi) {
     sincosf(theta, &sinTheta, &cosTheta);
     sincosf(phi, &sinPhi, &cosPhi);
 
-    return Vector3f(
-        sinTheta * cosPhi,
-        sinTheta * sinPhi,
-        cosTheta
-    );
+    return Vector3f(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
 }
 
 Point2f sphericalCoordinates(const Vector3f &v) {
-    Point2f result(
-        std::acos(v.z()),
-        std::atan2(v.y(), v.x())
-    );
+    Point2f result(std::acos(v.z()), std::atan2(v.y(), v.x()));
     if (result.y() < 0)
-        result.y() += 2*M_PI;
+        result.y() += 2 * M_PI;
     return result;
 }
 
@@ -272,17 +267,17 @@ float fresnel(float cosThetaI, float extIOR, float intIOR) {
     /* Using Snell's law, calculate the squared sine of the
        angle between the normal and the transmitted ray */
     float eta = etaI / etaT,
-          sinThetaTSqr = eta*eta * (1-cosThetaI*cosThetaI);
+          sinThetaTSqr = eta * eta * (1 - cosThetaI * cosThetaI);
 
     if (sinThetaTSqr > 1.0f)
-        return 1.0f;  /* Total internal reflection! */
+        return 1.0f; /* Total internal reflection! */
 
     float cosThetaT = std::sqrt(1.0f - sinThetaTSqr);
 
-    float Rs = (etaI * cosThetaI - etaT * cosThetaT)
-             / (etaI * cosThetaI + etaT * cosThetaT);
-    float Rp = (etaT * cosThetaI - etaI * cosThetaT)
-             / (etaT * cosThetaI + etaI * cosThetaT);
+    float Rs = (etaI * cosThetaI - etaT * cosThetaT) /
+               (etaI * cosThetaI + etaT * cosThetaT);
+    float Rp = (etaT * cosThetaI - etaI * cosThetaT) /
+               (etaT * cosThetaI + etaI * cosThetaT);
 
     return (Rs * Rs + Rp * Rp) / 2.0f;
 }

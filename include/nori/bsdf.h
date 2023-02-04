@@ -29,19 +29,18 @@ struct BSDFQueryRecord {
 
     /// Create a new record for sampling the BSDF
     BSDFQueryRecord(const Vector3f &wi)
-        : wi(wi), eta(1.f), measure(EUnknownMeasure) { }
+        : wi(wi), eta(1.f), measure(EUnknownMeasure) {}
 
     /// Create a new record for querying the BSDF
-    BSDFQueryRecord(const Vector3f &wi,
-            const Vector3f &wo, EMeasure measure)
-        : wi(wi), wo(wo), eta(1.f), measure(measure) { }
+    BSDFQueryRecord(const Vector3f &wi, const Vector3f &wo, EMeasure measure)
+        : wi(wi), wo(wo), eta(1.f), measure(measure) {}
 };
 
 /**
  * \brief Superclass of all bidirectional scattering distribution functions
  */
 class BSDF : public NoriObject {
-public:
+  public:
     /**
      * \brief Sample the BSDF and return the importance weight (i.e. the
      * value of the BSDF * cos(theta_o) divided by the probability density
@@ -56,7 +55,8 @@ public:
      *         when this is appropriate. A zero value means that sampling
      *         failed.
      */
-    virtual Color3f sample(BSDFQueryRecord &bRec, const Point2f &sample) const = 0;
+    virtual Color3f sample(BSDFQueryRecord &bRec,
+                           const Point2f &sample) const = 0;
 
     /**
      * \brief Evaluate the BSDF for a pair of directions and measure

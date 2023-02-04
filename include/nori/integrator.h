@@ -13,19 +13,19 @@ NORI_NAMESPACE_BEGIN
 /**
  * \brief Abstract integrator (i.e. a rendering technique)
  *
- * In Nori, the different rendering techniques are collectively referred to as 
+ * In Nori, the different rendering techniques are collectively referred to as
  * integrators, since they perform integration over a high-dimensional
  * space. Each integrator represents a specific approach for solving
  * the light transport equation---usually favored in certain scenarios, but
  * at the same time affected by its own set of intrinsic limitations.
  */
 class Integrator : public NoriObject {
-public:
+  public:
     /// Release all memory
-    virtual ~Integrator() { }
+    virtual ~Integrator() {}
 
     /// Perform an (optional) preprocess step
-    virtual void preprocess(const Scene *scene) { }
+    virtual void preprocess(const Scene *scene) {}
 
     /**
      * \brief Sample the incident radiance along a ray
@@ -39,10 +39,11 @@ public:
      * \return
      *    A (usually) unbiased estimate of the radiance in this direction
      */
-    virtual Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray) const = 0;
+    virtual Color3f Li(const Scene *scene, Sampler *sampler,
+                       const Ray3f &ray) const = 0;
 
     /**
-     * \brief Return the type of object (i.e. Mesh/BSDF/etc.) 
+     * \brief Return the type of object (i.e. Mesh/BSDF/etc.)
      * provided by this instance
      * */
     EClassType getClassType() const { return EIntegrator; }

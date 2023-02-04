@@ -4,11 +4,11 @@
     Copyright (c) 2015 by Wenzel Jakob
 */
 
+#include <filesystem/resolver.h>
+#include <fstream>
 #include <nori/mesh.h>
 #include <nori/timer.h>
-#include <filesystem/resolver.h>
 #include <unordered_map>
-#include <fstream>
 
 NORI_NAMESPACE_BEGIN
 
@@ -16,9 +16,10 @@ NORI_NAMESPACE_BEGIN
  * \brief Loader for Wavefront OBJ triangle meshes
  */
 class WavefrontOBJ : public Mesh {
-public:
+  public:
     WavefrontOBJ(const PropertyList &propList) {
-        typedef std::unordered_map<OBJVertex, uint32_t, OBJVertexHash> VertexMap;
+        typedef std::unordered_map<OBJVertex, uint32_t, OBJVertexHash>
+            VertexMap;
 
         filesystem::path filename =
             getFileResolver()->resolve(propList.getString("filename"));
@@ -32,11 +33,11 @@ public:
         cout.flush();
         Timer timer;
 
-        std::vector<Vector3f>   positions;
-        std::vector<Vector2f>   texcoords;
-        std::vector<Vector3f>   normals;
-        std::vector<uint32_t>   indices;
-        std::vector<OBJVertex>  vertices;
+        std::vector<Vector3f> positions;
+        std::vector<Vector2f> texcoords;
+        std::vector<Vector3f> normals;
+        std::vector<uint32_t> indices;
+        std::vector<OBJVertex> vertices;
         VertexMap vertexMap;
 
         std::string line_str;
@@ -78,12 +79,12 @@ public:
                     nVertices = 6;
                 }
                 /* Convert to an indexed vertex list */
-                for (int i=0; i<nVertices; ++i) {
+                for (int i = 0; i < nVertices; ++i) {
                     const OBJVertex &v = verts[i];
                     VertexMap::const_iterator it = vertexMap.find(v);
                     if (it == vertexMap.end()) {
-                        vertexMap[v] = (uint32_t) vertices.size();
-                        indices.push_back((uint32_t) vertices.size());
+                        vertexMap[v] = (uint32_t)vertices.size();
+                        indices.push_back((uint32_t)vertices.size());
                         vertices.push_back(v);
                     } else {
                         indices.push_back(it->second);
@@ -92,41 +93,42 @@ public:
             }
         }
 
-        m_F.resize(3, indices.size()/3);
-        memcpy(m_F.data(), indices.data(), sizeof(uint32_t)*indices.size());
+        m_F.resize(3, indices.size() / 3);
+        memcpy(m_F.data(), indices.data(), sizeof(uint32_t) * indices.size());
 
         m_V.resize(3, vertices.size());
-        for (uint32_t i=0; i<vertices.size(); ++i)
-            m_V.col(i) = positions.at(vertices[i].p-1);
+        for (uint32_t i = 0; i < vertices.size(); ++i)
+            m_V.col(i) = positions.at(vertices[i].p - 1);
 
         if (!normals.empty()) {
             m_N.resize(3, vertices.size());
-            for (uint32_t i=0; i<vertices.size(); ++i)
-                m_N.col(i) = normals.at(vertices[i].n-1);
+            for (uint32_t i = 0; i < vertices.size(); ++i)
+                m_N.col(i) = normals.at(vertices[i].n - 1);
         }
 
         if (!texcoords.empty()) {
             m_UV.resize(2, vertices.size());
-            for (uint32_t i=0; i<vertices.size(); ++i)
-                m_UV.col(i) = texcoords.at(vertices[i].uv-1);
+            for (uint32_t i = 0; i < vertices.size(); ++i)
+                m_UV.col(i) = texcoords.at(vertices[i].uv - 1);
         }
 
         m_name = filename.str();
         cout << "done. (V=" << m_V.cols() << ", F=" << m_F.cols() << ", took "
              << timer.elapsedString() << " and "
              << memString(m_F.size() * sizeof(uint32_t) +
-                          sizeof(float) * (m_V.size() + m_N.size() + m_UV.size()))
+                          sizeof(float) *
+                              (m_V.size() + m_N.size() + m_UV.size()))
              << ")" << endl;
     }
 
-protected:
+  protected:
     /// Vertex indices used by the OBJ format
     struct OBJVertex {
-        uint32_t p = (uint32_t) -1;
-        uint32_t n = (uint32_t) -1;
-        uint32_t uv = (uint32_t) -1;
+        uint32_t p = (uint32_t)-1;
+        uint32_t n = (uint32_t)-1;
+        uint32_t uv = (uint32_t)-1;
 
-        inline OBJVertex() { }
+        inline OBJVertex() {}
 
         inline OBJVertex(const std::string &string) {
             std::vector<std::string> tokens = tokenize(string, "/", true);

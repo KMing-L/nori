@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <nori/common.h>
 #include <chrono>
+#include <nori/common.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -17,7 +17,7 @@ NORI_NAMESPACE_BEGIN
  * This class is convenient for collecting performance data
  */
 class Timer {
-public:
+  public:
     /// Create a new timer and reset it
     Timer() { reset(); }
 
@@ -27,8 +27,9 @@ public:
     /// Return the number of milliseconds elapsed since the timer was last reset
     double elapsed() const {
         auto now = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
-        return (double) duration.count();
+        auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+        return (double)duration.count();
     }
 
     /// Like \ref elapsed(), but return a human-readable string
@@ -36,19 +37,22 @@ public:
         return timeString(elapsed(), precise);
     }
 
-    /// Return the number of milliseconds elapsed since the timer was last reset and then reset it
+    /// Return the number of milliseconds elapsed since the timer was last reset
+    /// and then reset it
     double lap() {
         auto now = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+        auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
         start = now;
-        return (double) duration.count();
+        return (double)duration.count();
     }
 
     /// Like \ref lap(), but return a human-readable string
     std::string lapString(bool precise = false) {
         return timeString(lap(), precise);
     }
-private:
+
+  private:
     std::chrono::system_clock::time_point start;
 };
 

@@ -4,8 +4,8 @@
     Copyright (c) 2015 by Wenzel Jakob
 */
 
-#include <nori/sampler.h>
 #include <nori/block.h>
+#include <nori/sampler.h>
 #include <pcg32.h>
 
 NORI_NAMESPACE_BEGIN
@@ -19,12 +19,12 @@ NORI_NAMESPACE_BEGIN
  * general, refer to the \ref Sampler class.
  */
 class Independent : public Sampler {
-public:
+  public:
     Independent(const PropertyList &propList) {
-        m_sampleCount = (size_t) propList.getInteger("sampleCount", 1);
+        m_sampleCount = (size_t)propList.getInteger("sampleCount", 1);
     }
 
-    virtual ~Independent() { }
+    virtual ~Independent() {}
 
     std::unique_ptr<Sampler> clone() const {
         std::unique_ptr<Independent> cloned(new Independent());
@@ -34,33 +34,28 @@ public:
     }
 
     void prepare(const ImageBlock &block) {
-        m_random.seed(
-            block.getOffset().x(),
-            block.getOffset().y()
-        );
+        m_random.seed(block.getOffset().x(), block.getOffset().y());
     }
 
-    void generate() { /* No-op for this sampler */ }
-    void advance()  { /* No-op for this sampler */ }
-
-    float next1D() {
-        return m_random.nextFloat();
+    void generate() { /* No-op for this sampler */
     }
-    
+    void advance() { /* No-op for this sampler */
+    }
+
+    float next1D() { return m_random.nextFloat(); }
+
     Point2f next2D() {
-        return Point2f(
-            m_random.nextFloat(),
-            m_random.nextFloat()
-        );
+        return Point2f(m_random.nextFloat(), m_random.nextFloat());
     }
 
     std::string toString() const {
         return tfm::format("Independent[sampleCount=%i]", m_sampleCount);
     }
-protected:
-    Independent() { }
 
-private:
+  protected:
+    Independent() {}
+
+  private:
     pcg32 m_random;
 };
 

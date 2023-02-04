@@ -11,7 +11,7 @@
 NORI_NAMESPACE_BEGIN
 
 class Microfacet : public BSDF {
-public:
+  public:
     Microfacet(const PropertyList &propList) {
         /* RMS surface roughness */
         m_alpha = propList.getFloat("alpha", 0.1f);
@@ -25,30 +25,30 @@ public:
         /* Albedo of the diffuse base material (a.k.a "kd") */
         m_kd = propList.getColor("kd", Color3f(0.5f));
 
-        /* To ensure energy conservation, we must scale the 
-           specular component by 1-kd. 
+        /* To ensure energy conservation, we must scale the
+           specular component by 1-kd.
 
-           While that is not a particularly realistic model of what 
-           happens in reality, this will greatly simplify the 
-           implementation. Please see the course staff if you're 
-           interested in implementing a more realistic version 
+           While that is not a particularly realistic model of what
+           happens in reality, this will greatly simplify the
+           implementation. Please see the course staff if you're
+           interested in implementing a more realistic version
            of this BRDF. */
         m_ks = 1 - m_kd.maxCoeff();
     }
 
     /// Evaluate the BRDF for the given pair of directions
     Color3f eval(const BSDFQueryRecord &bRec) const {
-    	throw NoriException("MicrofacetBRDF::eval(): not implemented!");
+        throw NoriException("MicrofacetBRDF::eval(): not implemented!");
     }
 
     /// Evaluate the sampling density of \ref sample() wrt. solid angles
     float pdf(const BSDFQueryRecord &bRec) const {
-    	throw NoriException("MicrofacetBRDF::pdf(): not implemented!");
+        throw NoriException("MicrofacetBRDF::pdf(): not implemented!");
     }
 
     /// Sample the BRDF
     Color3f sample(BSDFQueryRecord &bRec, const Point2f &_sample) const {
-    	throw NoriException("MicrofacetBRDF::sample(): not implemented!");
+        throw NoriException("MicrofacetBRDF::sample(): not implemented!");
 
         // Note: Once you have implemented the part that computes the scattered
         // direction, the last part of this function should simply return the
@@ -65,22 +65,17 @@ public:
     }
 
     std::string toString() const {
-        return tfm::format(
-            "Microfacet[\n"
-            "  alpha = %f,\n"
-            "  intIOR = %f,\n"
-            "  extIOR = %f,\n"
-            "  kd = %s,\n"
-            "  ks = %f\n"
-            "]",
-            m_alpha,
-            m_intIOR,
-            m_extIOR,
-            m_kd.toString(),
-            m_ks
-        );
+        return tfm::format("Microfacet[\n"
+                           "  alpha = %f,\n"
+                           "  intIOR = %f,\n"
+                           "  extIOR = %f,\n"
+                           "  kd = %s,\n"
+                           "  ks = %f\n"
+                           "]",
+                           m_alpha, m_intIOR, m_extIOR, m_kd.toString(), m_ks);
     }
-private:
+
+  private:
     float m_alpha;
     float m_intIOR, m_extIOR;
     float m_ks;

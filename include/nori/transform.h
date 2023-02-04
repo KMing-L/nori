@@ -20,40 +20,34 @@ NORI_NAMESPACE_BEGIN
  * here, since it is required when transforming normal vectors.
  */
 struct Transform {
-public:
+  public:
     /// Create the identity transform
-    Transform() : 
-        m_transform(Eigen::Matrix4f::Identity()),
-        m_inverse(Eigen::Matrix4f::Identity()) { }
+    Transform()
+        : m_transform(Eigen::Matrix4f::Identity()),
+          m_inverse(Eigen::Matrix4f::Identity()) {}
 
-    /// Create a new transform instance for the given matrix 
+    /// Create a new transform instance for the given matrix
     Transform(const Eigen::Matrix4f &trafo);
 
     /// Create a new transform instance for the given matrix and its inverse
-    Transform(const Eigen::Matrix4f &trafo, const Eigen::Matrix4f &inv) 
-        : m_transform(trafo), m_inverse(inv) { }
+    Transform(const Eigen::Matrix4f &trafo, const Eigen::Matrix4f &inv)
+        : m_transform(trafo), m_inverse(inv) {}
 
     /// Return the underlying matrix
-    const Eigen::Matrix4f &getMatrix() const {
-        return m_transform;
-    }
+    const Eigen::Matrix4f &getMatrix() const { return m_transform; }
 
     /// Return the inverse of the underlying matrix
-    const Eigen::Matrix4f &getInverseMatrix() const {
-        return m_inverse;
-    }
+    const Eigen::Matrix4f &getInverseMatrix() const { return m_inverse; }
 
     /// Return the inverse transformation
-    Transform inverse() const {
-        return Transform(m_inverse, m_transform);
-    }
+    Transform inverse() const { return Transform(m_inverse, m_transform); }
 
     /// Concatenate with another transform
     Transform operator*(const Transform &t) const;
 
     /// Apply the homogeneous transformation to a 3D vector
     Vector3f operator*(const Vector3f &v) const {
-        return m_transform.topLeftCorner<3,3>() * v;
+        return m_transform.topLeftCorner<3, 3>() * v;
     }
 
     /// Apply the homogeneous transformation to a 3D normal
@@ -69,16 +63,13 @@ public:
 
     /// Apply the homogeneous transformation to a ray
     Ray3f operator*(const Ray3f &r) const {
-        return Ray3f(
-            operator*(r.o), 
-            operator*(r.d), 
-            r.mint, r.maxt
-        );
+        return Ray3f(operator*(r.o), operator*(r.d), r.mint, r.maxt);
     }
 
     /// Return a string representation
     std::string toString() const;
-private:
+
+  private:
     Eigen::Matrix4f m_transform;
     Eigen::Matrix4f m_inverse;
 };

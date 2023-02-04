@@ -27,13 +27,14 @@ NORI_NAMESPACE_BEGIN
  * nearby samples on the pixel (according to the used reconstruction filter).
  *
  * When rendering with filters, the samples in a rectangular
- * region will generally also contribute to pixels just outside of 
+ * region will generally also contribute to pixels just outside of
  * this region. For that reason, this class also stores information about
  * a small border region around the rectangle, whose size depends on the
  * properties of the reconstruction filter.
  */
-class ImageBlock : public Eigen::Array<Color4f, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> {
-public:
+class ImageBlock : public Eigen::Array<Color4f, Eigen::Dynamic, Eigen::Dynamic,
+                                       Eigen::RowMajor> {
+  public:
     /**
      * Create a new image block of the specified maximum size
      * \param size
@@ -43,16 +44,16 @@ public:
      *     filter provided here.
      */
     ImageBlock(const Vector2i &size, const ReconstructionFilter *filter);
-    
+
     /// Release all memory
     ~ImageBlock();
-    
+
     /// Configure the offset of the block within the main image
     void setOffset(const Point2i &offset) { m_offset = offset; }
 
     /// Return the offset of the block within the main image
     inline const Point2i &getOffset() const { return m_offset; }
-    
+
     /// Configure the size of the block within the main image
     void setSize(const Point2i &size) { m_size = size; }
 
@@ -64,7 +65,7 @@ public:
 
     /**
      * \brief Turn the block into a proper bitmap
-     * 
+     *
      * This entails normalizing all pixels and discarding
      * the border region.
      */
@@ -82,20 +83,21 @@ public:
     /**
      * \brief Merge another image block into this one
      *
-     * During the merge operation, this function locks 
+     * During the merge operation, this function locks
      * the destination block using a mutex.
      */
     void put(ImageBlock &b);
 
     /// Lock the image block (using an internal mutex)
     inline void lock() const { m_mutex.lock(); }
-    
+
     /// Unlock the image block
     inline void unlock() const { m_mutex.unlock(); }
 
     /// Return a human-readable string summary
     std::string toString() const;
-protected:
+
+  protected:
     Point2i m_offset;
     Vector2i m_size;
     int m_borderSize = 0;
@@ -116,7 +118,7 @@ protected:
  * rendered first.
  */
 class BlockGenerator {
-public:
+  public:
     /**
      * \brief Create a block generator with
      * \param size
@@ -125,7 +127,7 @@ public:
      *      Maximum size of the individual blocks
      */
     BlockGenerator(const Vector2i &size, int blockSize);
-    
+
     /**
      * \brief Return the next block to be rendered
      *
@@ -137,7 +139,8 @@ public:
 
     /// Return the total number of blocks
     int getBlockCount() const { return m_blocksLeft; }
-protected:
+
+  protected:
     enum EDirection { ERight = 0, EDown, ELeft, EUp };
 
     Point2i m_block;
