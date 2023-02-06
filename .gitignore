@@ -27,3 +27,5 @@ Debug
 x64
 todo.md
 ajax.obj
+*.exr
+*.png

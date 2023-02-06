@@ -96,7 +96,9 @@ void OctTree::divide(uint32_t n, std::vector<AccelNode *> *children) {
     }
 }
 
-void BVH::divide(uint32_t n, std::vector<AccelNode *> *children) {}
+void BVH::divide(uint32_t n, std::vector<AccelNode *> *children) {
+    
+}
 
 bool Accel::rayIntersect(const Ray3f &ray_, Intersection &its,
                          bool shadowRay) const {

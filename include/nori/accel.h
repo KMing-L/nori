@@ -108,8 +108,8 @@ class OctTree : public Accel {
     };
 
   private:
-    uint32_t COUNT_LEAF_TRI = 30;
-    uint32_t LIMIT_DEPTH = 10;
+    uint32_t COUNT_LEAF_TRI = 16;
+    uint32_t LIMIT_DEPTH = 12;
 };
 
 class BVH : public Accel {
@@ -126,8 +126,8 @@ class BVH : public Accel {
     uint32_t getBlockCount() const { return COUNT_BLOCK; }
 
   private:
-    uint32_t COUNT_LEAF_TRI = 10;
-    uint32_t LIMIT_DEPTH = 8;
+    uint32_t COUNT_LEAF_TRI = 16;
+    uint32_t LIMIT_DEPTH = 32;
     uint32_t COUNT_BLOCK = 10;
 };
 
