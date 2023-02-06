@@ -10,6 +10,19 @@
 
 NORI_NAMESPACE_BEGIN
 
+struct AccelNode {
+    uint32_t first_child = 0; // child index
+    BoundingBox3f bbox;
+    std::vector<std::pair<uint32_t, uint32_t>> indices;
+
+    AccelNode() : bbox() {}
+
+    explicit AccelNode(BoundingBox3f box) : bbox(std::move(box)) {}
+
+    explicit AccelNode(BoundingBox3f box, uint32_t count)
+        : bbox(std::move(box)), indices(count) {}
+};
+
 /**
  * \brief Acceleration data structure for ray intersection queries
  *
@@ -54,9 +67,68 @@ class Accel {
     bool rayIntersect(const Ray3f &ray, Intersection &its,
                       bool shadowRay) const;
 
+    virtual void divide(uint32_t n, std::vector<AccelNode *> *children) = 0;
+
+    virtual bool traverse(uint32_t n, Ray3f &ray, Intersection &its,
+                          bool shadowRay, uint32_t &f) const = 0;
+
+    virtual std::pair<uint32_t, uint32_t> getLimits() const = 0;
+
+    uint32_t getTriCount() { return m_indices.size(); }
+
+    virtual ~Accel() {
+        for (int i = 0, n = m_meshes.size(); i < n; i++)
+            delete m_meshes[i];
+        for (int i = 0, n = m_tree.size(); i < n; i++)
+            delete m_tree[i];
+    }
+
+  protected:
+    std::vector<Mesh *> m_meshes; ///< Mesh (only a single one for now)
+    BoundingBox3f m_bbox;         ///< Bounding box of the entire scene
+    std::vector<std::pair<uint32_t, uint32_t>> m_indices;
+    std::vector<AccelNode *> m_tree;
+
+    uint32_t depth_curr_ = -1;
+    uint32_t count_leaf_ = 0;
+
   private:
-    Mesh *m_mesh = nullptr; ///< Mesh (only a single one for now)
-    BoundingBox3f m_bbox;   ///< Bounding box of the entire scene
+    uint32_t max_mesh_ = 10;
+};
+
+class OctTree : public Accel {
+  public:
+    void divide(uint32_t n, std::vector<AccelNode *> *children) override;
+
+    bool traverse(uint32_t n, Ray3f &ray, Intersection &its, bool shadowRay,
+                  uint32_t &f) const override;
+
+    std::pair<uint32_t, uint32_t> getLimits() const override {
+        return {COUNT_LEAF_TRI, LIMIT_DEPTH};
+    };
+
+  private:
+    uint32_t COUNT_LEAF_TRI = 30;
+    uint32_t LIMIT_DEPTH = 10;
+};
+
+class BVH : public Accel {
+  public:
+    void divide(uint32_t n, std::vector<AccelNode *> *children) override;
+
+    bool traverse(uint32_t n, Ray3f &ray, Intersection &its, bool shadowRay,
+                  uint32_t &f) const override;
+
+    std::pair<uint32_t, uint32_t> getLimits() const override {
+        return {COUNT_LEAF_TRI, LIMIT_DEPTH};
+    };
+
+    uint32_t getBlockCount() const { return COUNT_BLOCK; }
+
+  private:
+    uint32_t COUNT_LEAF_TRI = 10;
+    uint32_t LIMIT_DEPTH = 8;
+    uint32_t COUNT_BLOCK = 10;
 };
 
 NORI_NAMESPACE_END
