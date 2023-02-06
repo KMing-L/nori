@@ -69,7 +69,7 @@ void Accel::build() {
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
             .count();
 
-    cout << "[build time]: " << time << "ms" << endl;
+    cout << "[build time]: " << time / 1000.0f << "s" << endl;
     cout << "[max depth]: " << depth_curr_ << endl;
     cout << "[node count]: " << m_tree.size() << endl;
     cout << "[leaf count]: " << count_leaf_ << endl;
@@ -97,7 +97,57 @@ void OctTree::divide(uint32_t n, std::vector<AccelNode *> *children) {
 }
 
 void BVH::divide(uint32_t n, std::vector<AccelNode *> *children) {
-    
+    auto node = m_tree[n];
+    int axis = node->bbox.getMajorAxis();
+
+    std::sort(node->indices.begin(), node->indices.end(),
+              [this, axis](std::pair<uint32_t, uint32_t> x,
+                           std::pair<uint32_t, uint32_t> y) {
+                  return this->m_meshes[x.first]
+                             ->getBoundingBox(x.second)
+                             .getCenter()[axis] < this->m_meshes[y.first]
+                                                      ->getBoundingBox(y.second)
+                                                      .getCenter()[axis];
+              });
+
+    float min_cost = std::numeric_limits<float>::infinity();
+    AccelNode *left = new AccelNode(), *right = new AccelNode();
+    std::vector<std::pair<uint32_t, uint32_t>> faces_left, faces_right;
+    for (uint32_t i = 1, bucket = getBlockCount(); i < bucket; i++) {
+        auto begin = node->indices.begin();
+        auto end = node->indices.end();
+        auto mid = node->indices.begin() +
+                   (static_cast<uint32_t>(node->indices.size()) * i / bucket);
+
+        faces_left = std::vector<std::pair<uint32_t, uint32_t>>(begin, mid);
+        faces_right = std::vector<std::pair<uint32_t, uint32_t>>(mid, end);
+
+        BoundingBox3f bbox_left, bbox_right;
+        for (auto [meshIdx, faceIdx] : faces_left) {
+            bbox_left.expandBy(m_meshes[meshIdx]->getBoundingBox(faceIdx));
+        }
+        for (auto [meshIdx, faceIdx] : faces_right) {
+            bbox_right.expandBy(m_meshes[meshIdx]->getBoundingBox(faceIdx));
+        }
+
+        float S_left = bbox_left.getSurfaceArea();
+        float S_right = bbox_right.getSurfaceArea();
+        float S = node->bbox.getSurfaceArea();
+        float cost = static_cast<float>(faces_left.size()) * S_left / S +
+                     static_cast<float>(faces_right.size()) * S_right / S +
+                     0.125f;
+
+        if (cost < min_cost) {
+            min_cost = cost;
+            left->bbox = std::move(bbox_left);
+            left->indices = std::move(faces_left);
+            right->bbox = std::move(bbox_right);
+            right->indices = std::move(faces_right);
+        }
+    }
+
+    children->emplace_back(left);
+    children->emplace_back(right);
 }
 
 bool Accel::rayIntersect(const Ray3f &ray_, Intersection &its,
@@ -226,6 +276,40 @@ bool OctTree::traverse(uint32_t n, Ray3f &ray, Intersection &its,
 }
 
 bool BVH::traverse(uint32_t n, Ray3f &ray, Intersection &its, bool shadowRay,
-                   uint32_t &f) const {}
+                   uint32_t &f) const {
+    auto node = m_tree[n];
+
+    if (!node->bbox.rayIntersect(ray))
+        return false;
+
+    bool foundIntersection = false;
+    if (!node->first_child) {
+        for (auto [index_mesh, index_indice] : node->indices) {
+            float u, v, t;
+            if (m_meshes[index_mesh]->rayIntersect(index_indice, ray, u, v,
+                                                   t)) {
+                /* An intersection was found! Can terminate
+                   immediately if this is a shadow ray query */
+                if (shadowRay)
+                    return foundIntersection;
+                ray.maxt = its.t = t;
+                its.uv = Point2f(u, v);
+                its.mesh = m_meshes[index_mesh];
+                f = index_indice;
+                foundIntersection = true;
+            }
+        }
+    } else {
+        foundIntersection |=
+            traverse(node->first_child, ray, its, shadowRay, f);
+        if (shadowRay && foundIntersection) {
+            return true;
+        }
+        foundIntersection |=
+            traverse(node->first_child + 1, ray, its, shadowRay, f);
+    }
+
+    return foundIntersection;
+}
 
 NORI_NAMESPACE_END

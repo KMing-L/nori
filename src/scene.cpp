@@ -13,7 +13,12 @@
 
 NORI_NAMESPACE_BEGIN
 
-Scene::Scene(const PropertyList &) { m_accel = new OctTree(); }
+Scene::Scene(const PropertyList &) {
+    // cout << endl << "Using OctTree" << endl;
+    // m_accel = new OctTree();
+    cout << endl << "Using BVH" << endl;
+    m_accel = new BVH();
+}
 
 Scene::~Scene() {
     delete m_accel;
