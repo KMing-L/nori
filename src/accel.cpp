@@ -174,6 +174,8 @@ bool Accel::rayIntersect(const Ray3f &ray_, Intersection &its,
     // }
 
     foundIntersection = this->traverse(0, ray, its, shadowRay, f);
+    if (shadowRay)
+        return foundIntersection;
 
     if (foundIntersection) {
         /* At this point, we now know that there is an intersection,
@@ -246,7 +248,7 @@ bool OctTree::traverse(uint32_t n, Ray3f &ray, Intersection &its,
                 /* An intersection was found! Can terminate
                    immediately if this is a shadow ray query */
                 if (shadowRay)
-                    return foundIntersection;
+                    return true;
                 ray.maxt = its.t = t;
                 its.uv = Point2f(u, v);
                 its.mesh = m_meshes[index_mesh];
@@ -291,7 +293,7 @@ bool BVH::traverse(uint32_t n, Ray3f &ray, Intersection &its, bool shadowRay,
                 /* An intersection was found! Can terminate
                    immediately if this is a shadow ray query */
                 if (shadowRay)
-                    return foundIntersection;
+                    return true;
                 ray.maxt = its.t = t;
                 its.uv = Point2f(u, v);
                 its.mesh = m_meshes[index_mesh];
