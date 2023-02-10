@@ -6,6 +6,7 @@
 
 #include <nori/bitmap.h>
 #include <nori/camera.h>
+#include <nori/dpdf.h>
 #include <nori/emitter.h>
 #include <nori/integrator.h>
 #include <nori/sampler.h>
@@ -30,6 +31,14 @@ Scene::~Scene() {
 void Scene::activate() {
     m_accel->build();
 
+    if (uint32_t n = m_emitter_meshes_idx.size()) {
+        m_emitter_dpdf = new DiscretePDF(n);
+        for (auto i : m_emitter_meshes_idx) {
+            m_emitter_dpdf->append(m_meshes[i]->getDPDF()->getSum());
+        }
+        m_emitter_dpdf->normalize();
+    }
+
     if (!m_integrator)
         throw NoriException("No integrator was specified!");
     if (!m_camera)
@@ -52,6 +61,9 @@ void Scene::addChild(NoriObject *obj) {
         Mesh *mesh = static_cast<Mesh *>(obj);
         m_accel->addMesh(mesh);
         m_meshes.push_back(mesh);
+        if (mesh->isEmitter()) {
+            m_emitter_meshes_idx.push_back(m_meshes.size() - 1);
+        }
     } break;
 
     case EEmitter: {

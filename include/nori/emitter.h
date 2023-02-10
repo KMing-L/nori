@@ -19,7 +19,7 @@ struct EmitterQueryRecord {
 
     EmitterQueryRecord(Point3f ref) : ref(ref) {}
     EmitterQueryRecord(Point3f ref, Point3f p, Normal3f n)
-        : ref(ref), p(p), n(n) {}
+        : ref(ref), p(p), n(n), wi((p - ref).normalized()) {}
 };
 
 /**
