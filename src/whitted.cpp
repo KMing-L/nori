@@ -10,49 +10,78 @@ class WhittedIntegrator : public Integrator {
   public:
     WhittedIntegrator(const PropertyList &props) {}
 
-    Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray) const {
+    Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &_ray) const {
         /* Find the surface that is visible in the requested direction */
-        Intersection its;
-        if (!scene->rayIntersect(ray, its))
-            return Color3f(0.0f);
+        Ray3f ray = _ray;
+        Color3f radiance(0.f);
+        float coff = 1.f;
 
-        Color3f Le(0.f), Lr(0.f);
+        while (true) {
+            Intersection its;
+            if (!scene->rayIntersect(ray, its))
+                break;
 
-        if (its.mesh->isEmitter()) {
-            EmitterQueryRecord eRec(ray.o, its.p, its.shFrame.n);
-            Le = its.mesh->getEmitter()->eval(eRec);
-        }
+            Color3f Le(0.f);
+            if (its.mesh->isEmitter()) {
+                EmitterQueryRecord eRec(ray.o, its.p, its.shFrame.n);
+                Le = its.mesh->getEmitter()->eval(eRec);
+            }
+            radiance += Le;
 
-        if (scene->getEmitterDpdf()) {
-            const Mesh *light = scene->getEmitterMesh(
-                scene->getEmitterDpdf()->sample(sampler->next1D()));
-            float lightPdf = scene->getEmitterDpdf()->getNormalization() *
+            if (its.mesh->getBSDF()->isDiffuse()) {
+                Color3f Lr(0.f);
+
+                if (scene->getEmitterDpdf()) {
+                    const Mesh *light = scene->getEmitterMesh(
+                        scene->getEmitterDpdf()->sample(sampler->next1D()));
+                    float lightPdf =
+                        scene->getEmitterDpdf()->getNormalization() *
                         light->getDPDF()->getSum();
 
-            EmitterQueryRecord eRec(its.p);
-            Lr = light->getEmitter()->sample(light, sampler, eRec);
+                    EmitterQueryRecord eRec(its.p);
+                    Lr = light->getEmitter()->sample(light, sampler, eRec);
 
-            if (scene->rayIntersect(
-                    Ray3f(eRec.ref, eRec.wi, Epsilon,
-                          (eRec.p - eRec.ref).norm() - Epsilon))) {
-                Lr = 0.f;
-            } else {
-                float cosTheta = its.shFrame.n.dot(eRec.wi);
-                if (cosTheta <= 0) {
-                    Lr = 0.f;
-                } else {
-                    BSDFQueryRecord bRec(its.toLocal(-ray.d),
-                                         its.toLocal(eRec.wi), ESolidAngle);
-                    Color3f f = its.mesh->getBSDF()->eval(bRec);
-                    Lr *= f * cosTheta / lightPdf;
+                    if (scene->rayIntersect(
+                            Ray3f(eRec.ref, eRec.wi, Epsilon,
+                                  (eRec.p - eRec.ref).norm() - Epsilon))) {
+                        Lr = 0.f;
+                    } else {
+                        float cosTheta = its.shFrame.n.dot(eRec.wi);
+                        if (cosTheta <= 0) {
+                            Lr = 0.f;
+                        } else {
+                            BSDFQueryRecord bRec(its.toLocal(-ray.d),
+                                                 its.toLocal(eRec.wi),
+                                                 ESolidAngle);
+                            Color3f f = its.mesh->getBSDF()->eval(bRec);
+                            Lr *= f * cosTheta / lightPdf;
+                        }
+                    }
                 }
+
+                radiance += Lr;
+                break;
+            } else {
+                BSDFQueryRecord bRec(its.toLocal(-ray.d));
+                Color3f refColor =
+                    its.mesh->getBSDF()->sample(bRec, sampler->next2D());
+
+                if (refColor.isApprox(Color3f(0.f)) || sampler->next1D() > rr)
+                    break;
+
+                ray = Ray3f(its.p, its.toWorld(bRec.wo));
+
+                coff *= rr;
             }
         }
 
-        return Le + Lr;
+        return radiance / coff;
     }
 
     std::string toString() const { return "WhittedIntegrator[]"; }
+
+  private:
+    float rr = 0.95;
 };
 
 NORI_REGISTER_CLASS(WhittedIntegrator, "whitted");
