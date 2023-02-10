@@ -123,7 +123,7 @@ MeshSample Mesh::sample(Sampler *sampler) const {
 
     Point2f pointSample = sampler->next2D();
     float alpha = 1 - sqrt(1 - pointSample.x());
-    float beta = pointSample.y() * (1 - pointSample.x());
+    float beta = pointSample.y() * sqrt(1 - pointSample.x());
     float gamma = 1 - alpha - beta;
 
     Point3f v0 = m_V.col(m_F(0, idx));
