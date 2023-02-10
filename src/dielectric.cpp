@@ -31,7 +31,42 @@ class Dielectric : public BSDF {
     }
 
     Color3f sample(BSDFQueryRecord &bRec, const Point2f &sample) const {
-        throw NoriException("Unimplemented!");
+        Vector3f normalLocal{0., 0., 1.};
+        float cosThetaI = Frame::cosTheta(bRec.wi);
+
+        float etaI, etaT;
+        if (cosThetaI > 0.f) {
+            etaI = m_extIOR;
+            etaT = m_intIOR;
+        } else {
+            etaI = m_intIOR;
+            etaT = m_extIOR;
+            normalLocal = -normalLocal;
+            cosThetaI = -cosThetaI;
+        }
+        bRec.eta = etaI / etaT;
+
+        float sin2ThetaI = Frame::sinTheta2(bRec.wi);
+        float sin2ThetaT = bRec.eta * bRec.eta * sin2ThetaI;
+
+        if (sin2ThetaT >= 1.) {
+            bRec.wo = Vector3f{-bRec.wi.x(), -bRec.wi.y(), bRec.wi.z()};
+        } else {
+            float fresnelTerm = nori::fresnel(cosThetaI, etaI, etaT);
+
+            if (sample.x() < fresnelTerm) {
+                bRec.wo = Vector3f{-bRec.wi.x(), -bRec.wi.y(), bRec.wi.z()};
+            } else {
+                float cosThetaT = std::sqrt(1. - sin2ThetaT);
+
+                bRec.wo = bRec.eta * -bRec.wi +
+                          (bRec.eta * cosThetaI - cosThetaT) * normalLocal;
+            }
+        }
+
+        bRec.measure = EDiscrete;
+
+        return Color3f(1.);
     }
 
     std::string toString() const {
