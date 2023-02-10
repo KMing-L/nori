@@ -7,6 +7,7 @@
 #pragma once
 
 #include <nori/bbox.h>
+#include <nori/dpdf.h>
 #include <nori/frame.h>
 #include <nori/object.h>
 
@@ -46,6 +47,12 @@ struct Intersection {
 
     /// Return a human-readable summary of the intersection record
     std::string toString() const;
+};
+
+struct MeshSample {
+    Point3f p;
+    Normal3f n;
+    float pdf;
 };
 
 /**
@@ -150,6 +157,10 @@ class Mesh : public NoriObject {
      * */
     EClassType getClassType() const { return EMesh; }
 
+    const DiscretePDF *getDPDF() const { return m_dpdf; }
+
+    MeshSample sample(Sampler *sampler) const;
+
   protected:
     /// Create an empty mesh
     Mesh();
@@ -163,6 +174,7 @@ class Mesh : public NoriObject {
     BSDF *m_bsdf = nullptr;       ///< BSDF of the surface
     Emitter *m_emitter = nullptr; ///< Associated emitter, if any
     BoundingBox3f m_bbox;         ///< Bounding box of the mesh
+    DiscretePDF *m_dpdf = nullptr;
 };
 
 NORI_NAMESPACE_END

@@ -7,6 +7,7 @@
 #include <Eigen/Geometry>
 #include <nori/bbox.h>
 #include <nori/bsdf.h>
+#include <nori/dpdf.h>
 #include <nori/emitter.h>
 #include <nori/mesh.h>
 #include <nori/warp.h>
@@ -26,6 +27,11 @@ void Mesh::activate() {
         m_bsdf = static_cast<BSDF *>(
             NoriObjectFactory::createInstance("diffuse", PropertyList()));
     }
+
+    m_dpdf = new DiscretePDF(getTriangleCount());
+    for (uint32_t i = 0, n = getTriangleCount(); i < n; i++)
+        m_dpdf->append(surfaceArea(i));
+    m_dpdf->normalize();
 }
 
 float Mesh::surfaceArea(uint32_t index) const {
@@ -109,6 +115,32 @@ void Mesh::addChild(NoriObject *obj) {
         throw NoriException("Mesh::addChild(<%s>) is not supported!",
                             classTypeName(obj->getClassType()));
     }
+}
+
+MeshSample Mesh::sample(Sampler *sampler) const {
+    MeshSample sample;
+    uint32_t idx = m_dpdf->sample(sampler->next1D());
+
+    Point2f pointSample = sampler->next2D();
+    float alpha = 1 - sqrt(1 - pointSample.x());
+    float beta = pointSample.y() * (1 - pointSample.x());
+    float gamma = 1 - alpha - beta;
+
+    Point3f v0 = m_V.col(m_F(0, idx));
+    Point3f v1 = m_V.col(m_F(1, idx));
+    Point3f v2 = m_V.col(m_F(2, idx));
+
+    sample.p = alpha * v0 + beta * v1 + gamma * v2;
+    if (m_N.size() != 0) {
+        sample.n = alpha * m_N.col(m_F(0, idx)) + beta * m_N.col(m_F(1, idx)) +
+                   gamma * m_N.col(m_F(2, idx));
+    } else {
+        sample.n = (v1 - v0).cross(v2 - v1).normalized();
+    }
+
+    sample.pdf = m_dpdf->getNormalization();
+
+    return sample;
 }
 
 std::string Mesh::toString() const {
