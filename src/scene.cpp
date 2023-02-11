@@ -31,14 +31,6 @@ Scene::~Scene() {
 void Scene::activate() {
     m_accel->build();
 
-    if (uint32_t n = m_emitter_meshes_idx.size()) {
-        m_emitter_dpdf = new DiscretePDF(n);
-        for (auto i : m_emitter_meshes_idx) {
-            m_emitter_dpdf->append(m_meshes[i]->getDPDF()->getSum());
-        }
-        m_emitter_dpdf->normalize();
-    }
-
     if (!m_integrator)
         throw NoriException("No integrator was specified!");
     if (!m_camera)

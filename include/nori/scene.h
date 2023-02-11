@@ -29,12 +29,6 @@ class Scene : public NoriObject {
     /// Return a pointer to the scene's kd-tree
     const Accel *getAccel() const { return m_accel; }
 
-    const Mesh *getEmitterMesh(uint32_t idx) const {
-        return m_meshes[m_emitter_meshes_idx[idx]];
-    }
-
-    const DiscretePDF *getEmitterDpdf() const { return m_emitter_dpdf; }
-
     /// Return a pointer to the scene's integrator
     const Integrator *getIntegrator() const { return m_integrator; }
 
@@ -112,10 +106,18 @@ class Scene : public NoriObject {
 
     EClassType getClassType() const { return EScene; }
 
+    const Mesh *getRandomEmitter(float rnd) const {
+        auto const &n = m_emitter_meshes_idx.size();
+        size_t index =
+            std::min(static_cast<size_t>(std::floor(n * rnd)), n - 1);
+        return m_meshes[m_emitter_meshes_idx[index]];
+    }
+
+    uint32_t getEmitterCount() const { return m_emitter_meshes_idx.size(); }
+
   private:
     std::vector<Mesh *> m_meshes;
     std::vector<uint32_t> m_emitter_meshes_idx;
-    DiscretePDF *m_emitter_dpdf = nullptr;
     Integrator *m_integrator = nullptr;
     Sampler *m_sampler = nullptr;
     Camera *m_camera = nullptr;

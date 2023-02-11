@@ -31,12 +31,9 @@ class WhittedIntegrator : public Integrator {
             if (its.mesh->getBSDF()->isDiffuse()) {
                 Color3f Lr(0.f);
 
-                if (scene->getEmitterDpdf()) {
-                    const Mesh *light = scene->getEmitterMesh(
-                        scene->getEmitterDpdf()->sample(sampler->next1D()));
-                    float lightPdf =
-                        scene->getEmitterDpdf()->getNormalization() *
-                        light->getDPDF()->getSum();
+                if (scene->getEmitterCount()) {
+                    const Mesh *light =
+                        scene->getRandomEmitter(sampler->next1D());
 
                     EmitterQueryRecord eRec(its.p);
                     Lr = light->getEmitter()->sample(light, sampler, eRec);
@@ -54,7 +51,7 @@ class WhittedIntegrator : public Integrator {
                                                  its.toLocal(eRec.wi),
                                                  ESolidAngle);
                             Color3f f = its.mesh->getBSDF()->eval(bRec);
-                            Lr *= f * cosTheta / lightPdf;
+                            Lr *= f * cosTheta * scene->getEmitterCount();
                         }
                     }
                 }
