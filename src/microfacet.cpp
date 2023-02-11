@@ -38,23 +38,51 @@ class Microfacet : public BSDF {
 
     /// Evaluate the BRDF for the given pair of directions
     Color3f eval(const BSDFQueryRecord &bRec) const {
-        throw NoriException("MicrofacetBRDF::eval(): not implemented!");
+        Vector3f wh = (bRec.wi + bRec.wo).normalized();
+
+        auto D = DistributeBeckmann(wh);
+        auto F = fresnel(wh.dot(bRec.wi), m_extIOR, m_intIOR);
+        float G = G1(bRec.wi, wh) * G1(bRec.wo, wh);
+
+        return m_kd * INV_PI +
+               m_ks * D * F * G /
+                   (4 * Frame::cosTheta(bRec.wi) * Frame::cosTheta(bRec.wo) *
+                    Frame::cosTheta(wh));
     }
 
     /// Evaluate the sampling density of \ref sample() wrt. solid angles
     float pdf(const BSDFQueryRecord &bRec) const {
-        throw NoriException("MicrofacetBRDF::pdf(): not implemented!");
+        if (Frame::cosTheta(bRec.wo) <= 0)
+            return 0.f;
+
+        Vector3f wh = (bRec.wi + bRec.wo).normalized();
+        auto D = DistributeBeckmann(wh);
+        auto J = 1 / (4.f * wh.dot(bRec.wo));
+
+        return m_ks * D * J + (1 - m_ks) * Frame::cosTheta(bRec.wo) * INV_PI;
     }
 
     /// Sample the BRDF
     Color3f sample(BSDFQueryRecord &bRec, const Point2f &_sample) const {
-        throw NoriException("MicrofacetBRDF::sample(): not implemented!");
+        if (Frame::cosTheta(bRec.wi) <= 0)
+            return 0.f;
 
-        // Note: Once you have implemented the part that computes the scattered
-        // direction, the last part of this function should simply return the
-        // BRDF value divided by the solid angle density and multiplied by the
-        // cosine factor from the reflection equation, i.e.
-        // return eval(bRec) * Frame::cosTheta(bRec.wo) / pdf(bRec);
+        if (_sample.x() > m_ks) { // Diffuse
+            Point2f sample((_sample.x() - m_ks) / (1.f - m_ks), _sample.y());
+            bRec.wo = Warp::squareToCosineHemisphere(sample);
+        } else { // Specular
+            Point2f sample(_sample.x() / m_ks, _sample.y());
+            Vector3f wh = Warp::squareToBeckmann(sample, m_alpha);
+            bRec.wo = ((2.0f * wh.dot(bRec.wi) * wh) - bRec.wi).normalized();
+        }
+        bRec.measure = ESolidAngle;
+        bRec.eta = 1.0f;
+
+        if (Frame::cosTheta(bRec.wo) < 0.f) {
+            return Color3f(0.0f);
+        }
+
+        return eval(bRec) * Frame::cosTheta(bRec.wo) / pdf(bRec);
     }
 
     bool isDiffuse() const {
@@ -73,6 +101,23 @@ class Microfacet : public BSDF {
                            "  ks = %f\n"
                            "]",
                            m_alpha, m_intIOR, m_extIOR, m_kd.toString(), m_ks);
+    }
+
+  protected:
+    float DistributeBeckmann(const Vector3f wh) const {
+        return INV_TWOPI * 2 *
+               exp(-pow(Frame::tanTheta(wh), 2.f) / pow(m_alpha, 2.f)) /
+               pow(m_alpha, 2.f) / pow(Frame::cosTheta(wh), 3.f);
+    }
+
+    float G1(const Vector3f &wv, const Vector3f &wh) const {
+        if ((wv.dot(wh) / wv.z()) <= 0)
+            return 0.f;
+
+        float b = 1 / (m_alpha * Frame::tanTheta(wv));
+        return b < 1.6f ? (3.535 * b + 2.181 * pow(b, 2.f)) /
+                              (1 + 2.276 * b + 2.577 * pow(b, 2.f))
+                        : 1.f;
     }
 
   private:
